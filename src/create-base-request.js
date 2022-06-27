@@ -23,7 +23,7 @@ module.exports = function createBaseRequest({
   softwareData,
   invoices,
 }) {
-  const { login, password, taxNumber, signatureKey } = technicalUser;
+  const { login, password, hashedPassword, taxNumber, signatureKey } = technicalUser;
 
   /* Normalize Object key order. This is necessary because
      of the XML element has sequence property. */
@@ -38,11 +38,14 @@ module.exports = function createBaseRequest({
     'softwareDevTaxNumber',
   ]);
 
-  const passwordHash = crypto
+  let passwordHash;
+  if(!hashedPassword) {
+  passwordHash = crypto
     .createHash('sha512')
     .update(password)
     .digest('hex')
     .toUpperCase();
+  }
 
   const requestSignature = createRequestSignature({
     requestId,
@@ -69,7 +72,7 @@ module.exports = function createBaseRequest({
           $: {
             cryptoType: 'SHA-512',
           },
-          _: passwordHash,
+          _: hashedPassword ? hashedPassword : passwordHash,
         },
         'common:taxNumber': taxNumber,
         'common:requestSignature': {
